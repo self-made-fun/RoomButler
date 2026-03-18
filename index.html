@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomButler</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- HERO -->
+  <section class="text-center py-16 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
+    <h1 class="text-4xl font-bold mb-4">ROOMBUTLER</h1>
+    <p class="text-xl mb-6">Hotelska usluga na dugme</p>
+    <p class="max-w-xl mx-auto mb-6">Gost skenira QR kod → izabere šta mu treba → vama stiže zahtjev.</p>
+    <button onclick="openDemo()" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-2xl shadow hover:scale-105 transition-transform">Pokreni demo</button>
+  </section>
+
+  <!-- DEMO MODAL -->
+  <div id="demoModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4">
+    <div class="bg-gray-50 rounded-3xl overflow-hidden w-[380px] h-[700px] relative shadow-2xl border-4 border-blue-500 flex flex-col">
+      <button onclick="closeDemo()" class="absolute top-2 right-2 bg-blue-500 text-white px-3 py-1 rounded-2xl hover:bg-blue-600">X</button>
+
+      <!-- SCREEN 1: ROOM INPUT -->
+      <div id="screen1" class="p-4 flex flex-col justify-center h-full">
+        <h2 class="text-lg font-bold mb-4 text-center">Unesite broj sobe</h2>
+        <input id="roomInput" type="text" placeholder="npr. 207" class="border p-3 rounded-xl mb-4 text-center border-blue-400">
+        <button onclick="goToMenu()" class="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600">Nastavi</button>
+      </div>
+
+      <!-- SCREEN 2: MENU -->
+      <div id="screen2" class="hidden p-4 space-y-3">
+        <h2 class="text-lg font-bold mb-4 text-center">Šta vam treba?</h2>
+        <button onclick="sendRequest('Jastuk')" class="bg-white p-3 rounded-xl shadow hover:bg-blue-50 w-full">🛏️ Jastuk</button>
+        <button onclick="sendRequest('Šampon')" class="bg-white p-3 rounded-xl shadow hover:bg-blue-50 w-full">🧴 Šampon</button>
+        <button onclick="sendRequest('Voda')" class="bg-white p-3 rounded-xl shadow hover:bg-blue-50 w-full">💧 Voda</button>
+        <button onclick="sendRequest('Čišćenje')" class="bg-white p-3 rounded-xl shadow hover:bg-blue-50 w-full">🧹 Čišćenje</button>
+      </div>
+
+      <!-- SCREEN 3: LOADING -->
+      <div id="screen3" class="hidden flex flex-col items-center justify-center h-full">
+        <p class="text-lg">📡 Šalje zahtjev...</p>
+      </div>
+
+      <!-- SCREEN 4: SUCCESS -->
+      <div id="screen4" class="hidden flex flex-col items-center justify-center h-full text-center p-4">
+        <p class="text-green-600 font-bold text-lg">✅ Zahtjev poslan!</p>
+        <p id="details" class="mt-2 text-blue-600 font-semibold"></p>
+        <p class="text-sm text-gray-500 mt-2">Osoblje je obaviješteno</p>
+        <button onclick="showEmail()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600">Pogledaj šta hotel vidi</button>
+      </div>
+
+      <!-- SCREEN 5: EMAIL VIEW -->
+      <div id="screen5" class="hidden p-4 space-y-2">
+        <h2 class="font-bold mb-4">📩 Primljena poruka</h2>
+        <div class="bg-white p-3 rounded-xl shadow">
+          <p id="emailContent" class="text-blue-600 font-semibold"></p>
+          <p class="text-sm text-gray-500 mt-2">⏰ Upravo sada</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- UPUTSTVO / OBJAŠNJENJE -->
+  <section class="bg-white py-16 px-4 mt-6 border-t-4 border-blue-500 shadow-inner">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-center">Kako sistem funkcioniše</h2>
+      <div class="space-y-6 text-gray-700">
+        <p><strong>1. Skeniranje QR koda:</strong><br>
+        Gost skenira QR kod u sobi i automatski otvara ovu web aplikaciju.</p>
+        <p><strong>2. Unos broja sobe:</strong><br>
+        Gost unosi broj sobe (npr. 207) kako bi sistem znao odakle dolazi zahtjev.</p>
+        <p><strong>3. Odabir usluge:</strong><br>
+        Gost bira šta mu treba (jastuk, voda, čišćenje itd.).</p>
+        <p><strong>4. Slanje zahtjeva:</strong><br>
+        Simulira se proces slanja zahtjeva (loading ekran). </p>
+        <p><strong>5. Potvrda:</strong><br>
+        Prikazuje se potvrda šta je poslano i iz koje sobe.</p>
+        <p><strong>6. Šta hotel vidi:</strong><br>
+        Klikom na dugme "Pogledaj šta hotel vidi" vidi se simulacija email poruke koju osoblje prima.</p>
+        <p><strong>TEHNIČKI:</strong><br>
+        - Frontend simulira korisnički interfejs<br>
+        - Podaci se šalju direktno putem Google Apps Script-a (bez baze poput Google Sheets)<br>
+        - Email se automatski šalje osoblju</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let room = '';
+
+    function openDemo() {
+      document.getElementById('demoModal').classList.remove('hidden');
+      document.getElementById('demoModal').classList.add('flex');
+    }
+
+    function closeDemo() {
+      document.getElementById('demoModal').classList.add('hidden');
+      resetScreens();
+    }
+
+    function resetScreens() {
+      document.querySelectorAll('[id^="screen"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById('screen1').classList.remove('hidden');
+    }
+
+    function goToMenu() {
+      room = document.getElementById('roomInput').value || '207';
+      document.getElementById('screen1').classList.add('hidden');
+      document.getElementById('screen2').classList.remove('hidden');
+    }
+
+    function sendRequest(item) {
+      document.getElementById('screen2').classList.add('hidden');
+      document.getElementById('screen3').classList.remove('hidden');
+
+      setTimeout(() => {
+        document.getElementById('screen3').classList.add('hidden');
+        document.getElementById('screen4').classList.remove('hidden');
+        document.getElementById('details').innerText = 'Soba ' + room + ' traži: ' + item;
+        document.getElementById('emailContent').innerText = '🔔 Soba ' + room + ': ' + item;
+      }, 1200);
+    }
+
+    function showEmail() {
+      document.getElementById('screen4').classList.add('hidden');
+      document.getElementById('screen5').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>
